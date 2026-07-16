@@ -46,7 +46,10 @@ free multi-domain Let's Encrypt certificate.
 4. Generate the extra Portainer login:
 
    ```bash
-   docker run --rm --entrypoint htpasswd httpd:2-alpine -Bbn mohamed 'CHOOSE-A-PASSWORD' | sudo tee /opt/stacks/nginx/auth/.htpasswd >/dev/null
+   sudo docker run --rm -it \
+     -v /opt/stacks/nginx/auth:/auth \
+     --entrypoint htpasswd \
+     httpd:2-alpine -cB /auth/.htpasswd mohamed
    sudo chmod 600 /opt/stacks/nginx/auth/.htpasswd
    ```
 
