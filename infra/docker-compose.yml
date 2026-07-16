@@ -20,8 +20,9 @@ services:
       - 'host.docker.internal:host-gateway'
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
-      # Secrets live on the VPS, outside Portainer's temporary Git checkout.
-      - /opt/stacks/nginx/certs:/etc/nginx/certs:ro
+      # Certificates and credentials live outside Portainer's Git checkout.
+      - /opt/stacks/nginx/letsencrypt:/etc/letsencrypt:ro
+      - /opt/stacks/nginx/certbot-webroot:/var/www/certbot:ro
       - /opt/stacks/nginx/auth:/etc/nginx/auth:ro
     depends_on:
       - web

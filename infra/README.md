@@ -11,33 +11,61 @@ docker compose up -d
 
 ## Nginx reverse proxy and TLS
 
-Nginx is the only service exposing public HTTP/HTTPS ports. It proxies the main
-domain to the separately deployed portfolio and uses subdomains for Portainer,
-n8n, cal.com, and Umami.
+Nginx is the only service exposing public HTTP/HTTPS ports. Namecheap's SSL
+proxy terminates TLS for the main domain and connects to its HTTP origin.
+Portainer, n8n, cal.com, and Umami terminate TLS directly in Nginx using one
+free multi-domain Let's Encrypt certificate.
 
 1. Point the following DNS records to the VPS: `@`, `www`, `portainer`,
    `automation`, `book`, and `analytics`.
-2. Create stable secret directories on the VPS, outside Portainer's Git clone,
-   then put the Namecheap certificate chain at
-   `/opt/stacks/nginx/certs/fullchain.pem` and its matching private key at
-   `/opt/stacks/nginx/certs/private.key`. The certificate must cover every
-   configured hostname (normally using a wildcard certificate).
+2. Create stable certificate, challenge, and credential directories on the
+   VPS, outside Portainer's Git clone:
 
    ```bash
-   sudo mkdir -p /opt/stacks/nginx/{certs,auth}
+   sudo mkdir -p /opt/stacks/nginx/{letsencrypt,certbot-webroot,auth}
    ```
-3. Generate the extra Portainer login:
+
+3. Before starting Nginx for the first time, issue one certificate containing
+   all direct subdomains. Port 80 must be free and every subdomain must already
+   point to the VPS:
+
+   ```bash
+   sudo docker run --rm -it \
+     -p 80:80 \
+     -v /opt/stacks/nginx/letsencrypt:/etc/letsencrypt \
+     certbot/certbot certonly --standalone \
+     -d portainer.melhachimi.com \
+     -d automation.melhachimi.com \
+     -d book.melhachimi.com \
+     -d analytics.melhachimi.com
+   ```
+
+   Nginx references the certificate directory named after the first domain,
+   `portainer.melhachimi.com`.
+
+4. Generate the extra Portainer login:
 
    ```bash
    docker run --rm --entrypoint htpasswd httpd:2-alpine -Bbn mohamed 'CHOOSE-A-PASSWORD' | sudo tee /opt/stacks/nginx/auth/.htpasswd >/dev/null
-   sudo chmod 600 /opt/stacks/nginx/auth/.htpasswd /opt/stacks/nginx/certs/private.key
+   sudo chmod 600 /opt/stacks/nginx/auth/.htpasswd
    ```
 
-4. Set `DOMAIN` and the public URLs in `.env`, then start the stack:
+5. Set `DOMAIN=melhachimi.com` and the public URLs in `.env`, then start the
+   stack:
 
    ```bash
    docker compose config
    docker compose up -d
+   ```
+
+6. Renew the certificate periodically and reload Nginx:
+
+   ```bash
+   sudo docker run --rm \
+     -v /opt/stacks/nginx/letsencrypt:/etc/letsencrypt \
+     -v /opt/stacks/nginx/certbot-webroot:/var/www/certbot \
+     certbot/certbot renew --webroot -w /var/www/certbot
+   docker exec portfolio-nginx-1 nginx -s reload
    ```
 
 The portfolio is built from the repository root and stays private on the
