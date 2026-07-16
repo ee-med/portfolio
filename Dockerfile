@@ -25,6 +25,23 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Public Next.js values are embedded in the client bundle during the build.
+ARG NEXT_PUBLIC_SERVER_URL
+ARG NEXT_PUBLIC_CAL_LINK
+ARG NEXT_PUBLIC_CAL_ORIGIN
+ARG NEXT_PUBLIC_UMAMI_SRC
+ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID
+ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
+ENV NEXT_PUBLIC_CAL_LINK=$NEXT_PUBLIC_CAL_LINK
+ENV NEXT_PUBLIC_CAL_ORIGIN=$NEXT_PUBLIC_CAL_ORIGIN
+ENV NEXT_PUBLIC_UMAMI_SRC=$NEXT_PUBLIC_UMAMI_SRC
+ENV NEXT_PUBLIC_UMAMI_WEBSITE_ID=$NEXT_PUBLIC_UMAMI_WEBSITE_ID
+
+# Payload initializes during `next build`; production secrets are injected only
+# into the runtime container and are not baked into the image.
+ENV PAYLOAD_SECRET=build-only-not-used-at-runtime
+ENV DATABASE_URL=file:/tmp/portfolio-build.db
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.

@@ -1,7 +1,8 @@
 # Home-lab infra
 
-Self-hosted services that back the portfolio: **n8n** (automation) and, in the
-scheduling chunk, **cal.com** (bookings). Everything runs from this directory.
+The complete production stack: the **portfolio**, **Nginx**, **n8n**
+(automation), **cal.com** (bookings), and **Umami** (analytics). Everything runs
+from this directory and is deployable as one Portainer Git stack.
 
 ```bash
 cp .env.example .env    # fill in secrets (see below)
@@ -16,14 +17,20 @@ n8n, cal.com, and Umami.
 
 1. Point the following DNS records to the VPS: `@`, `www`, `portainer`,
    `automation`, `book`, and `analytics`.
-2. Put the Namecheap certificate chain at `nginx/certs/fullchain.pem` and the
-   matching private key at `nginx/certs/private.key`. The certificate must cover
-   every configured hostname (normally using a wildcard certificate).
+2. Create stable secret directories on the VPS, outside Portainer's Git clone,
+   then put the Namecheap certificate chain at
+   `/opt/stacks/nginx/certs/fullchain.pem` and its matching private key at
+   `/opt/stacks/nginx/certs/private.key`. The certificate must cover every
+   configured hostname (normally using a wildcard certificate).
+
+   ```bash
+   sudo mkdir -p /opt/stacks/nginx/{certs,auth}
+   ```
 3. Generate the extra Portainer login:
 
    ```bash
-   docker run --rm --entrypoint htpasswd httpd:2-alpine -Bbn mohamed 'CHOOSE-A-PASSWORD' > nginx/auth/.htpasswd
-   chmod 600 nginx/auth/.htpasswd nginx/certs/private.key
+   docker run --rm --entrypoint htpasswd httpd:2-alpine -Bbn mohamed 'CHOOSE-A-PASSWORD' | sudo tee /opt/stacks/nginx/auth/.htpasswd >/dev/null
+   sudo chmod 600 /opt/stacks/nginx/auth/.htpasswd /opt/stacks/nginx/certs/private.key
    ```
 
 4. Set `DOMAIN` and the public URLs in `.env`, then start the stack:
@@ -33,9 +40,10 @@ n8n, cal.com, and Umami.
    docker compose up -d
    ```
 
-The portfolio must publish port `3000` on the host and Portainer must publish
-`9443`; Nginx reaches both through Docker's host gateway. n8n, cal.com, Umami,
-and both PostgreSQL databases remain private to the Compose network.
+The portfolio is built from the repository root and stays private on the
+Compose network. Portainer is installed outside this stack and must publish
+`9443`; Nginx reaches it through Docker's host gateway. The portfolio, n8n,
+cal.com, Umami, and both PostgreSQL databases are not published on the host.
 
 Portainer is protected by Nginx Basic Auth in addition to its own login. n8n
 is deliberately not protected globally because public webhooks must reach it;

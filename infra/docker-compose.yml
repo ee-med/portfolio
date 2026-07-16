@@ -20,12 +20,36 @@ services:
       - 'host.docker.internal:host-gateway'
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-      - ./nginx/auth:/etc/nginx/auth:ro
+      # Secrets live on the VPS, outside Portainer's temporary Git checkout.
+      - /opt/stacks/nginx/certs:/etc/nginx/certs:ro
+      - /opt/stacks/nginx/auth:/etc/nginx/auth:ro
     depends_on:
+      - web
       - n8n
       - calcom
       - umami
+
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+        NEXT_PUBLIC_CAL_LINK: ${NEXT_PUBLIC_CAL_LINK:-}
+        NEXT_PUBLIC_CAL_ORIGIN: ${NEXT_PUBLIC_CAL_ORIGIN:-}
+        NEXT_PUBLIC_UMAMI_SRC: ${NEXT_PUBLIC_UMAMI_SRC:-}
+        NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-}
+    restart: unless-stopped
+    expose:
+      - '3000'
+    environment:
+      DATABASE_URL: file:/data/portfolio.db
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+      N8N_CONTACT_WEBHOOK_URL: http://n8n:5678/webhook/contact
+    volumes:
+      - portfolio_db:/data
+      - portfolio_media:/app/media
 
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
@@ -130,6 +154,8 @@ services:
         condition: service_healthy
 
 volumes:
+  portfolio_db:
+  portfolio_media:
   n8n_data:
   cal_db:
   umami_db:

@@ -9,6 +9,11 @@ import { mediaInfo } from '@/lib/media'
 import { display, mono } from './fonts'
 import './styles.css'
 
+// Payload content lives in the runtime SQLite volume, which does not exist in
+// the build image. Render public pages at request time instead of querying the
+// CMS while the Docker image is being built.
+export const dynamic = 'force-dynamic'
+
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 const umamiSrc = process.env.NEXT_PUBLIC_UMAMI_SRC
 const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID

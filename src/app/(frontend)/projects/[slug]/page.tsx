@@ -20,17 +20,6 @@ async function getProject(slug: string) {
   return docs[0] ?? null
 }
 
-export async function generateStaticParams() {
-  const payload = await getPayloadClient()
-  const { docs } = await payload.find({
-    collection: 'projects',
-    where: { _status: { equals: 'published' } },
-    limit: 100,
-    select: { slug: true },
-  })
-  return docs.map((doc) => ({ slug: doc.slug }))
-}
-
 export async function generateMetadata({
   params,
 }: {

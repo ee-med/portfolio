@@ -38,7 +38,13 @@ const h = (t: string, tag: 'h2' | 'h3' = 'h2') => ({
   version: 1,
   children: [text(t)],
 })
-const doc = (children: object[]) => ({
+type LexicalNode = {
+  type: string
+  version: number
+  [key: string]: unknown
+}
+
+const doc = (children: LexicalNode[]) => ({
   root: {
     type: 'root',
     direction: 'ltr' as const,
