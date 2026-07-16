@@ -1,43 +1,24 @@
-version: '3'
+# Self-hosting the portfolio with SQLite.
+# The DB is a single file and media are stored on disk, so both live on
+# named volumes to survive container restarts and redeploys.
 
 services:
-  payload:
-    image: node:20-alpine
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - '3000:3000'
+    environment:
+      # DB file lives on the persistent volume mounted at /data.
+      DATABASE_URL: file:/data/portfolio.db
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
     volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
-    depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+      - db:/data
+      - media:/app/media
 
 volumes:
-  data:
-  # pgdata:
-  node_modules:
+  db:
+  media:

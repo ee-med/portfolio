@@ -7,6 +7,8 @@ const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  // Emit a standalone server bundle for self-hosted / Docker deployments.
+  output: 'standalone',
   images: {
     localPatterns: [
       {

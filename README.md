@@ -1,67 +1,90 @@
-# Payload Blank Template
+# Portfolio
 
-This template comes configured with the bare minimum to get started on anything you need.
+A full stack engineer portfolio built with **Next.js 16**, **Tailwind CSS v4**, and **Payload CMS 3** (embedded in the Next.js App Router). Content is managed through the Payload admin and stored in **SQLite**.
 
-## Quick start
+## Stack
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+- Next.js 16 (App Router) with Payload 3 mounted at `/admin` (admin UI) and `/api`
+- Tailwind CSS v4 (dark-first theme)
+- SQLite via `@payloadcms/db-sqlite`
+- TypeScript
 
-## Quick Start - local setup
+## Content model
 
-To spin up this template locally, follow these steps:
+**Collections**
 
-### Clone
+- `Projects` - portfolio pieces (summary, rich-text description, featured image, gallery, tech stack, repo/live URLs, `featured` flag, manual order). Draft/publish enabled.
+- `Posts` - blog posts (excerpt, cover image, rich-text content, tags). Draft/publish enabled.
+- `Media` - uploads with `thumbnail` / `card` / `og` image sizes.
+- `Users` - admin login.
+- `ContactMessages` - contact-form submissions (created server-side only; readable in the admin under "Inbox").
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+**Globals**
 
-### Development
+- `About / Bio` - name, headline, avatar, bio, skills, work history, social links, resume.
+- `Site Settings` - site name, tagline, contact email, default OG image.
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+## Public pages
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+`/` (home) · `/projects` + `/projects/[slug]` · `/about` · `/blog` + `/blog/[slug]` · `/contact`
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+## Local development
 
-#### Docker (Optional)
+```bash
+cp .env.example .env      # then set PAYLOAD_SECRET (openssl rand -hex 32)
+pnpm install
+pnpm dev                  # http://localhost:3000
+```
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+Open `http://localhost:3000/admin` and follow the prompt to create your first admin user.
 
-To do so, follow these steps:
+### Seed demo content (optional)
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+```bash
+pnpm seed
+```
 
-## How it works
+Populates the About/Site Settings globals and a few sample projects and posts. Safe to re-run (idempotent).
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+### Useful scripts
 
-### Collections
+- `pnpm dev` - start the dev server
+- `pnpm build` / `pnpm start` - production build and serve
+- `pnpm generate:types` - regenerate `src/payload-types.ts` after editing collections/globals
+- `pnpm seed` - load demo content
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+## Self-hosting
 
-- #### Users (Authentication)
-
-  Users are auth-enabled collections that have access to the admin panel.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Media
-
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+The app builds to a standalone Next.js server (`output: 'standalone'`). Because SQLite is a single file and media are stored on disk, both must live on a persistent volume.
 
 ### Docker
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+```bash
+# Ensure PAYLOAD_SECRET and NEXT_PUBLIC_SERVER_URL are set (e.g. in a .env file)
+docker compose up --build -d
+```
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+`docker-compose.yml` builds the image and mounts named volumes:
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+- `db` at `/data` - holds `portfolio.db` (`DATABASE_URL=file:/data/portfolio.db`)
+- `media` at `/app/media` - holds uploaded files
 
-## Questions
+Put the container behind a reverse proxy (Caddy/Nginx/Traefik) for TLS, and set `NEXT_PUBLIC_SERVER_URL` to the public URL.
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+### Environment variables
+
+| Variable                 | Description                                        |
+| ------------------------ | -------------------------------------------------- |
+| `DATABASE_URL`           | SQLite connection string, e.g. `file:./portfolio.db` |
+| `PAYLOAD_SECRET`         | Secret for signing Payload tokens                  |
+| `NEXT_PUBLIC_SERVER_URL` | Public base URL (absolute OG/canonical URLs)       |
+
+## Notes
+
+- `synchronize`/auto schema push is used in dev. For production, review Payload's [migrations](https://payloadcms.com/docs/database/migrations) before deploying schema changes.
+- Uploaded media are stored on the local filesystem; back up the `media` directory (or volume) along with the database file.
+- The seed (`src/seed/index.ts`) ships placeholder demo content only. Real content lives in the database (gitignored) and is managed via the admin.
+
+## License
+
+[MIT](LICENSE). You're welcome to reuse the code.
