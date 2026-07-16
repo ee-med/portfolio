@@ -47,6 +47,12 @@ next-env.d.ts
 
 /media
 
+# TLS private material and generated Basic Auth credentials
+/infra/nginx/certs/*
+/infra/nginx/auth/*
+!/infra/nginx/certs/.gitkeep
+!/infra/nginx/auth/.gitkeep
+
 # Playwright
 node_modules/
 /test-results/

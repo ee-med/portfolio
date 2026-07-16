@@ -8,6 +8,40 @@ cp .env.example .env    # fill in secrets (see below)
 docker compose up -d
 ```
 
+## Nginx reverse proxy and TLS
+
+Nginx is the only service exposing public HTTP/HTTPS ports. It proxies the main
+domain to the separately deployed portfolio and uses subdomains for Portainer,
+n8n, cal.com, and Umami.
+
+1. Point the following DNS records to the VPS: `@`, `www`, `portainer`,
+   `automation`, `book`, and `analytics`.
+2. Put the Namecheap certificate chain at `nginx/certs/fullchain.pem` and the
+   matching private key at `nginx/certs/private.key`. The certificate must cover
+   every configured hostname (normally using a wildcard certificate).
+3. Generate the extra Portainer login:
+
+   ```bash
+   docker run --rm --entrypoint htpasswd httpd:2-alpine -Bbn mohamed 'CHOOSE-A-PASSWORD' > nginx/auth/.htpasswd
+   chmod 600 nginx/auth/.htpasswd nginx/certs/private.key
+   ```
+
+4. Set `DOMAIN` and the public URLs in `.env`, then start the stack:
+
+   ```bash
+   docker compose config
+   docker compose up -d
+   ```
+
+The portfolio must publish port `3000` on the host and Portainer must publish
+`9443`; Nginx reaches both through Docker's host gateway. n8n, cal.com, Umami,
+and both PostgreSQL databases remain private to the Compose network.
+
+Portainer is protected by Nginx Basic Auth in addition to its own login. n8n
+is deliberately not protected globally because public webhooks must reach it;
+Umami is also public because the portfolio must load its tracking script and
+send analytics events.
+
 ## n8n — contact form automation
 
 When someone submits the contact form, the portfolio saves the message to its

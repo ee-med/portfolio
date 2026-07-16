@@ -1,0 +1,99 @@
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name
+        ${DOMAIN}
+        www.${DOMAIN}
+        ${PORTAINER_SUBDOMAIN}.${DOMAIN}
+        ${N8N_SUBDOMAIN}.${DOMAIN}
+        ${CALCOM_SUBDOMAIN}.${DOMAIN}
+        ${UMAMI_SUBDOMAIN}.${DOMAIN};
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/private.key;
+
+    location / {
+        proxy_pass http://host.docker.internal:3000;
+        include /etc/nginx/conf.d/proxy-headers.conf;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${PORTAINER_SUBDOMAIN}.${DOMAIN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/private.key;
+
+    auth_basic "Portainer";
+    auth_basic_user_file /etc/nginx/auth/.htpasswd;
+
+    location / {
+        proxy_pass https://host.docker.internal:9443;
+        proxy_ssl_verify off;
+        include /etc/nginx/conf.d/proxy-headers.conf;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${N8N_SUBDOMAIN}.${DOMAIN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/private.key;
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://n8n:5678;
+        include /etc/nginx/conf.d/proxy-headers.conf;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${CALCOM_SUBDOMAIN}.${DOMAIN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/private.key;
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://calcom:3000;
+        include /etc/nginx/conf.d/proxy-headers.conf;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${UMAMI_SUBDOMAIN}.${DOMAIN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/private.key;
+
+    location / {
+        proxy_pass http://umami:3000;
+        include /etc/nginx/conf.d/proxy-headers.conf;
+    }
+}

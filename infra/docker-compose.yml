@@ -3,11 +3,35 @@
 # cal.com services are added in the scheduling chunk.
 
 services:
+  nginx:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN}
+      PORTAINER_SUBDOMAIN: ${PORTAINER_SUBDOMAIN:-portainer}
+      N8N_SUBDOMAIN: ${N8N_SUBDOMAIN:-automation}
+      CALCOM_SUBDOMAIN: ${CALCOM_SUBDOMAIN:-book}
+      UMAMI_SUBDOMAIN: ${UMAMI_SUBDOMAIN:-analytics}
+    extra_hosts:
+      # The portfolio and Portainer are installed outside this Compose stack.
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/auth:/etc/nginx/auth:ro
+    depends_on:
+      - n8n
+      - calcom
+      - umami
+
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
     restart: unless-stopped
-    ports:
-      - '5678:5678'
+    expose:
+      - '5678'
     environment:
       N8N_HOST: ${N8N_HOST:-localhost}
       N8N_PORT: 5678
@@ -48,8 +72,8 @@ services:
   calcom:
     image: calcom/cal.com:latest
     restart: unless-stopped
-    ports:
-      - '3002:3000'
+    expose:
+      - '3000'
     environment:
       # Must match how the app is reached publicly.
       NEXT_PUBLIC_WEBAPP_URL: ${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3002}
@@ -94,8 +118,8 @@ services:
   umami:
     image: ghcr.io/umami-software/umami:postgresql-latest
     restart: unless-stopped
-    ports:
-      - '3003:3000'
+    expose:
+      - '3000'
     environment:
       DATABASE_URL: postgresql://umami:${UMAMI_POSTGRES_PASSWORD}@umami-db:5432/umami
       DATABASE_TYPE: postgresql
