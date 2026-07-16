@@ -4,6 +4,10 @@ The complete production stack: the **portfolio**, **Nginx**, **n8n**
 (automation), **cal.com** (bookings), and **Umami** (analytics). Everything runs
 from this directory and is deployable as one Portainer Git stack.
 
+Nginx configuration templates and n8n workflow definitions are baked into
+their respective images during the Git deployment. They do not depend on
+runtime bind mounts into Portainer's temporary repository checkout.
+
 ```bash
 cp .env.example .env    # fill in secrets (see below)
 docker compose up -d

@@ -4,7 +4,9 @@
 
 services:
   nginx:
-    image: nginx:1.28-alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - '80:80'
@@ -19,7 +21,6 @@ services:
       # The portfolio and Portainer are installed outside this Compose stack.
       - 'host.docker.internal:host-gateway'
     volumes:
-      - ./nginx/templates:/etc/nginx/templates:ro
       # Certificates and credentials live outside Portainer's Git checkout.
       - /opt/stacks/nginx/letsencrypt:/etc/letsencrypt:ro
       - /opt/stacks/nginx/certbot-webroot:/var/www/certbot:ro
@@ -53,7 +54,9 @@ services:
       - portfolio_media:/app/media
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
     restart: unless-stopped
     expose:
       - '5678'
@@ -77,7 +80,6 @@ services:
       CAL_WEBAPP_URL: ${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3002}
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./n8n/workflows:/workflows:ro
 
   cal-db:
     image: postgres:16-alpine
