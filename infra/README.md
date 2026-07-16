@@ -8,6 +8,11 @@ Nginx configuration templates and n8n workflow definitions are baked into
 their respective images during the Git deployment. They do not depend on
 runtime bind mounts into Portainer's temporary repository checkout.
 
+Before the portfolio starts, the one-shot `web-volume-init` service gives the
+non-root application user ownership of the persistent SQLite and media
+volumes. A successful initializer remains exited with status `0`; this is
+expected.
+
 ```bash
 cp .env.example .env    # fill in secrets (see below)
 docker compose up -d

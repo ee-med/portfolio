@@ -52,6 +52,18 @@ services:
     volumes:
       - portfolio_db:/data
       - portfolio_media:/app/media
+    depends_on:
+      web-volume-init:
+        condition: service_completed_successfully
+
+  web-volume-init:
+    image: alpine:3.22
+    restart: 'no'
+    user: '0:0'
+    command: ['chown', '-R', '1001:1001', '/data', '/media']
+    volumes:
+      - portfolio_db:/data
+      - portfolio_media:/media
 
   n8n:
     build:
