@@ -53,6 +53,23 @@ services:
       - portfolio_db:/data
       - portfolio_media:/app/media
     depends_on:
+      web-schema-init:
+        condition: service_completed_successfully
+
+  web-schema-init:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: tools
+    restart: 'no'
+    command: ['./node_modules/.bin/tsx', 'src/scripts/init-db.ts']
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: file:/data/portfolio.db
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+    volumes:
+      - portfolio_db:/data
+    depends_on:
       web-volume-init:
         condition: service_completed_successfully
 

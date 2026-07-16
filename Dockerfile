@@ -54,6 +54,14 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
+# Full source/dependency image used only by the one-shot database schema
+# initializer. The production web image below remains the small standalone
+# Next.js output.
+FROM base AS tools
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app

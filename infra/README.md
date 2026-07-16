@@ -13,6 +13,11 @@ non-root application user ownership of the persistent SQLite and media
 volumes. A successful initializer remains exited with status `0`; this is
 expected.
 
+The subsequent one-shot `web-schema-init` service synchronizes the Payload
+schema into SQLite before the production server starts. It also remains exited
+with status `0` after a successful run. For a larger or business-critical
+deployment, replace schema push with committed Payload migrations.
+
 ```bash
 cp .env.example .env    # fill in secrets (see below)
 docker compose up -d
