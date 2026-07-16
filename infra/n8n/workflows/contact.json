@@ -1,0 +1,86 @@
+{
+  "name": "Contact form → Resend",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contact",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000001",
+      "name": "Contact webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "contact"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.CONTACT_FROM_EMAIL, to: [$env.CONTACT_NOTIFY_TO], reply_to: $json.body.email, subject: 'New contact from ' + $json.body.name, html: '<h2>New contact submission</h2><p><strong>' + $json.body.name + '</strong> &lt;' + $json.body.email + '&gt;</p><p style=\"white-space:pre-wrap\">' + $json.body.message + '</p>' }) }}",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000002",
+      "name": "Notify owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [540, 200],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.CONTACT_FROM_EMAIL, to: [$json.body.email], subject: 'Thanks for reaching out', html: '<p>Hi ' + $json.body.name + ',</p><p>Thanks for the message — it landed safely. I&apos;ll get back to you soon.</p><p>— sent automatically from the home lab</p>' }) }}",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000003",
+      "name": "Auto-reply sender",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [540, 400],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Contact webhook": {
+      "main": [
+        [
+          { "node": "Notify owner", "type": "main", "index": 0 },
+          { "node": "Auto-reply sender", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "id": "contact-form-resend",
+  "versionId": "b1a1c001-0000-4000-8000-0000000000ff",
+  "meta": {},
+  "pinData": {},
+  "tags": []
+}

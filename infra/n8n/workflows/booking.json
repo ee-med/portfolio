@@ -1,0 +1,99 @@
+{
+  "name": "Cal.com booking → meeting link email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "booking",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "c2b2d002-0000-4000-8000-000000000001",
+      "name": "Booking webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "booking"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize the cal.com BOOKING_CREATED payload into flat fields.\nconst body = $input.first().json.body || {};\nconst p = body.payload || {};\nconst attendee = (p.attendees && p.attendees[0]) || {};\nconst link =\n  (p.metadata && p.metadata.videoCallUrl) ||\n  (p.videoCallData && p.videoCallData.url) ||\n  (typeof p.location === 'string' && p.location.startsWith('http') ? p.location : '') ||\n  ($env.CAL_WEBAPP_URL + '/booking/' + (p.uid || ''));\nconst fmt = (iso, tz) => {\n  try {\n    return new Intl.DateTimeFormat('en-US', {\n      dateStyle: 'full', timeStyle: 'short', timeZone: tz || 'UTC',\n    }).format(new Date(iso));\n  } catch (e) { return iso || ''; }\n};\nreturn [{\n  json: {\n    triggerEvent: body.triggerEvent || '',\n    title: p.title || 'Your call',\n    attendeeName: attendee.name || 'there',\n    attendeeEmail: attendee.email || '',\n    organizerName: (p.organizer && p.organizer.name) || '',\n    organizerEmail: (p.organizer && p.organizer.email) || '',\n    when: fmt(p.startTime, attendee.timeZone),\n    timeZone: attendee.timeZone || 'UTC',\n    meetingLink: link,\n    uid: p.uid || '',\n  },\n}];"
+      },
+      "id": "c2b2d002-0000-4000-8000-000000000002",
+      "name": "Extract booking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.CONTACT_FROM_EMAIL, to: [$json.attendeeEmail], reply_to: $env.CONTACT_NOTIFY_TO, subject: 'Your call is booked: ' + $json.title, html: '<p>Hi ' + $json.attendeeName + ',</p><p>Your call is confirmed for <strong>' + $json.when + '</strong> (' + $json.timeZone + ').</p><p><a href=\"' + $json.meetingLink + '\" style=\"display:inline-block;background:#2ee6c6;color:#04110e;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600\">Join the meeting</a></p><p>Or open the link directly:<br><a href=\"' + $json.meetingLink + '\">' + $json.meetingLink + '</a></p><p>See you then!<br>— ' + $json.organizerName + '</p>' }) }}",
+        "options": {}
+      },
+      "id": "c2b2d002-0000-4000-8000-000000000003",
+      "name": "Email attendee link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 220],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.CONTACT_FROM_EMAIL, to: [$env.CONTACT_NOTIFY_TO], subject: 'New booking: ' + $json.title, html: '<p><strong>' + $json.attendeeName + '</strong> (' + $json.attendeeEmail + ') booked a call.</p><p>When: ' + $json.when + ' (' + $json.timeZone + ')</p><p>Link: <a href=\"' + $json.meetingLink + '\">' + $json.meetingLink + '</a></p>' }) }}",
+        "options": {}
+      },
+      "id": "c2b2d002-0000-4000-8000-000000000004",
+      "name": "Notify owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 400],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Booking webhook": {
+      "main": [[{ "node": "Extract booking", "type": "main", "index": 0 }]]
+    },
+    "Extract booking": {
+      "main": [
+        [
+          { "node": "Email attendee link", "type": "main", "index": 0 },
+          { "node": "Notify owner", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "id": "cal-booking-email",
+  "versionId": "c2b2d002-0000-4000-8000-0000000000ff",
+  "meta": {},
+  "pinData": {},
+  "tags": []
+}

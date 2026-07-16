@@ -1,0 +1,111 @@
+# Home-lab services for the portfolio: n8n (automation) and cal.com (scheduling).
+# Run from this directory:  docker compose --env-file .env up -d
+# cal.com services are added in the scheduling chunk.
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+    environment:
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      # Public base URL n8n uses to build webhook URLs. Set to your domain in prod.
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      N8N_EDITOR_BASE_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      GENERIC_TIMEZONE: ${TZ:-UTC}
+      # Persisted encryption key for stored credentials.
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_RUNNERS_ENABLED: 'true'
+      # Allow the contact workflow to read these from $env in expressions.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: 'false'
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL}
+      CONTACT_NOTIFY_TO: ${CONTACT_NOTIFY_TO}
+      # Base URL of cal.com, used as a fallback booking link in the email.
+      CAL_WEBAPP_URL: ${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3002}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+
+  cal-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${CAL_POSTGRES_USER:-calcom}
+      POSTGRES_PASSWORD: ${CAL_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CAL_POSTGRES_DB:-calcom}
+    volumes:
+      - cal_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${CAL_POSTGRES_USER:-calcom}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  calcom:
+    image: calcom/cal.com:latest
+    restart: unless-stopped
+    ports:
+      - '3002:3000'
+    environment:
+      # Must match how the app is reached publicly.
+      NEXT_PUBLIC_WEBAPP_URL: ${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3002}
+      NEXTAUTH_URL: ${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3002}
+      # openssl rand -base64 32
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      # openssl rand -base64 24  — NEVER change after first run.
+      CALENDSO_ENCRYPTION_KEY: ${CALENDSO_ENCRYPTION_KEY}
+      DATABASE_URL: postgresql://${CAL_POSTGRES_USER:-calcom}:${CAL_POSTGRES_PASSWORD}@cal-db:5432/${CAL_POSTGRES_DB:-calcom}
+      DATABASE_DIRECT_URL: postgresql://${CAL_POSTGRES_USER:-calcom}:${CAL_POSTGRES_PASSWORD}@cal-db:5432/${CAL_POSTGRES_DB:-calcom}
+      NEXT_PUBLIC_LICENSE_CONSENT: 'agree'
+      # Allow the portfolio origin to embed the booking page.
+      # cal.com wraps this in [ ] and JSON.parses it, so it must be a quoted
+      # string. The compose adds the quotes; set CAL_ALLOWED_HOSTNAMES to the
+      # bare host (e.g. localhost:3000). For multiple: host-a","host-b
+      ALLOWED_HOSTNAMES: '"${CAL_ALLOWED_HOSTNAMES:-localhost:3000}"'
+      # Optional: email so cal.com can send booking confirmations (Resend SMTP).
+      EMAIL_FROM: ${CAL_EMAIL_FROM:-}
+      EMAIL_SERVER_HOST: ${CAL_EMAIL_SERVER_HOST:-}
+      EMAIL_SERVER_PORT: ${CAL_EMAIL_SERVER_PORT:-}
+      EMAIL_SERVER_USER: ${CAL_EMAIL_SERVER_USER:-}
+      EMAIL_SERVER_PASSWORD: ${CAL_EMAIL_SERVER_PASSWORD:-}
+    depends_on:
+      cal-db:
+        condition: service_healthy
+
+  umami-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_POSTGRES_PASSWORD}
+      POSTGRES_DB: umami
+    volumes:
+      - umami_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U umami']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    ports:
+      - '3003:3000'
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_POSTGRES_PASSWORD}@umami-db:5432/umami
+      DATABASE_TYPE: postgresql
+      # openssl rand -hex 32 — used to sign sessions.
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    depends_on:
+      umami-db:
+        condition: service_healthy
+
+volumes:
+  n8n_data:
+  cal_db:
+  umami_db:
