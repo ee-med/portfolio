@@ -4,6 +4,10 @@ The complete production stack: the **portfolio**, **Nginx**, **n8n**
 (automation), **cal.com** (bookings), and **Umami** (analytics). Everything runs
 from this directory and is deployable as one Portainer Git stack.
 
+The bind paths in `docker-compose.yml` intentionally start with `./infra/`.
+Portainer resolves Git-stack bind mounts from the repository root even though
+the Compose file itself is inside `infra/`.
+
 ```bash
 cp .env.example .env    # fill in secrets (see below)
 docker compose up -d

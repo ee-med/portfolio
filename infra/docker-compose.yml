@@ -19,7 +19,8 @@ services:
       # The portfolio and Portainer are installed outside this Compose stack.
       - 'host.docker.internal:host-gateway'
     volumes:
-      - ./nginx/templates:/etc/nginx/templates:ro
+      # Portainer resolves Git-stack bind paths from the repository root.
+      - ./infra/nginx/templates:/etc/nginx/templates:ro
       # Certificates and credentials live outside Portainer's Git checkout.
       - /opt/stacks/nginx/letsencrypt:/etc/letsencrypt:ro
       - /opt/stacks/nginx/certbot-webroot:/var/www/certbot:ro
@@ -77,7 +78,7 @@ services:
       CAL_WEBAPP_URL: ${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3002}
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./n8n/workflows:/workflows:ro
+      - ./infra/n8n/workflows:/workflows:ro
 
   cal-db:
     image: postgres:16-alpine
