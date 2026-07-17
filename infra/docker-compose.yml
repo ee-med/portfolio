@@ -149,6 +149,10 @@ services:
       # Prevent Cal.com from treating the public `book` hostname as a custom
       # organization subdomain, which makes valid personal event URLs return 404.
       RESERVED_SUBDOMAINS: '"book"'
+      # Google Calendar/Meet OAuth client JSON downloaded from Google Cloud.
+      # Keep the JSON value in Portainer's stack environment, never in Git.
+      GOOGLE_API_CREDENTIALS: ${GOOGLE_API_CREDENTIALS:-}
+      GOOGLE_LOGIN_ENABLED: ${GOOGLE_LOGIN_ENABLED:-false}
       # Optional: email so cal.com can send booking confirmations (Resend SMTP).
       EMAIL_FROM: ${CAL_EMAIL_FROM:-}
       EMAIL_SERVER_HOST: ${CAL_EMAIL_SERVER_HOST:-}
