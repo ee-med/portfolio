@@ -146,6 +146,9 @@ services:
       # string. The compose adds the quotes; set CAL_ALLOWED_HOSTNAMES to the
       # bare host (e.g. localhost:3000). For multiple: host-a","host-b
       ALLOWED_HOSTNAMES: '"${CAL_ALLOWED_HOSTNAMES:-localhost:3000}"'
+      # Prevent Cal.com from treating the public `book` hostname as a custom
+      # organization subdomain, which makes valid personal event URLs return 404.
+      RESERVED_SUBDOMAINS: '"book"'
       # Optional: email so cal.com can send booking confirmations (Resend SMTP).
       EMAIL_FROM: ${CAL_EMAIL_FROM:-}
       EMAIL_SERVER_HOST: ${CAL_EMAIL_SERVER_HOST:-}
