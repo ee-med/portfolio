@@ -9,6 +9,11 @@ A full stack engineer portfolio built with **Next.js 16**, **Tailwind CSS v4**, 
 - SQLite via `@payloadcms/db-sqlite`
 - TypeScript
 
+## Architecture
+
+The production deployment, service boundaries, data stores, and external
+integrations are documented in the [architecture diagram](docs/architecture.md).
+
 ## Content model
 
 **Collections**
