@@ -9,6 +9,9 @@ server {
     server_name ${DOMAIN} www.${DOMAIN};
 
     # TLS for the main site terminates at the Namecheap proxy.
+    # Allow media uploads through the Payload CMS admin.
+    client_max_body_size 25m;
+
     location / {
         proxy_pass http://web:3000;
         include /etc/nginx/conf.d/proxy-headers.conf;
