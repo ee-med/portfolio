@@ -22,6 +22,14 @@ export const About: GlobalConfig = {
       },
     },
     {
+      name: 'heroIntro',
+      type: 'textarea',
+      label: 'Hero introduction',
+      admin: {
+        description: 'Paragraph shown beneath the headline on the home page.',
+      },
+    },
+    {
       name: 'avatar',
       type: 'upload',
       relationTo: 'media',
