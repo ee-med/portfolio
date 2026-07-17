@@ -588,6 +588,10 @@ export interface About {
    * Short tagline shown under your name on the home hero.
    */
   headline?: string | null;
+  /**
+   * Paragraph shown beneath the headline on the home page.
+   */
+  heroIntro?: string | null;
   avatar?: (number | null) | Media;
   /**
    * Longer intro rendered on the About page.
@@ -668,6 +672,7 @@ export interface SiteSetting {
 export interface AboutSelect<T extends boolean = true> {
   fullName?: T;
   headline?: T;
+  heroIntro?: T;
   avatar?: T;
   bio?: T;
   skills?:
