@@ -4,6 +4,7 @@ import React from 'react'
 
 import type { Project } from '@/payload-types'
 import { mediaInfo } from '@/lib/media'
+import { SkillChip } from '@/components/SkillChip'
 
 export function ProjectCard({ project }: { project: Project }) {
   const image = mediaInfo(project.featuredImage)
@@ -39,12 +40,7 @@ export function ProjectCard({ project }: { project: Project }) {
         {tech.length > 0 && (
           <ul className="mt-4 flex flex-wrap gap-1.5">
             {tech.map((t, i) => (
-              <li
-                key={i}
-                className="rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted"
-              >
-                {t.name}
-              </li>
+              <SkillChip key={i} name={t.name} compact />
             ))}
           </ul>
         )}
