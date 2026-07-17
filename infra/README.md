@@ -32,11 +32,11 @@ free multi-domain Let's Encrypt certificate.
 
 1. Point the following DNS records to the VPS: `@`, `www`, `portainer`,
    `automation`, `book`, and `analytics`.
-2. Create stable certificate, challenge, and credential directories on the
+2. Create stable certificate and challenge directories on the
    VPS, outside Portainer's Git clone:
 
    ```bash
-   sudo mkdir -p /opt/stacks/nginx/{letsencrypt,certbot-webroot,auth}
+   sudo mkdir -p /opt/stacks/nginx/{letsencrypt,certbot-webroot}
    ```
 
 3. Before starting Nginx for the first time, issue one certificate containing
@@ -57,17 +57,7 @@ free multi-domain Let's Encrypt certificate.
    Nginx references the certificate directory named after the first domain,
    `portainer.melhachimi.com`.
 
-4. Generate the extra Portainer login:
-
-   ```bash
-   sudo docker run --rm -it \
-     -v /opt/stacks/nginx/auth:/auth \
-     --entrypoint htpasswd \
-     httpd:2-alpine -cB /auth/.htpasswd mohamed
-   sudo chmod 600 /opt/stacks/nginx/auth/.htpasswd
-   ```
-
-5. Set `DOMAIN=melhachimi.com` and the public URLs in `.env`, then start the
+4. Set `DOMAIN=melhachimi.com` and the public URLs in `.env`, then start the
    stack:
 
    ```bash
@@ -75,7 +65,7 @@ free multi-domain Let's Encrypt certificate.
    docker compose up -d
    ```
 
-6. Renew the certificate periodically and reload Nginx:
+5. Renew the certificate periodically and reload Nginx:
 
    ```bash
    sudo docker run --rm \
@@ -90,10 +80,9 @@ Compose network. Portainer is installed outside this stack and must publish
 `9443`; Nginx reaches it through Docker's host gateway. The portfolio, n8n,
 cal.com, Umami, and both PostgreSQL databases are not published on the host.
 
-Portainer is protected by Nginx Basic Auth in addition to its own login. n8n
-is deliberately not protected globally because public webhooks must reach it;
-Umami is also public because the portfolio must load its tracking script and
-send analytics events.
+Portainer, n8n, cal.com, and Umami rely on their own application logins. n8n
+must remain reachable for public webhooks, and Umami must remain reachable so
+the portfolio can load its tracking script and send analytics events.
 
 ## n8n — contact form automation
 
