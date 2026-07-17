@@ -68,9 +68,8 @@ export default async function HomePage() {
               </p>
             )}
             <p className="mt-6 max-w-xl text-lg text-muted">
-              AI &amp; full-stack engineer. I build production-grade RAG systems
-              and real-time voice assistants, run a home lab, chase techno
-              line-ups, and fish when the servers behave.
+              {about.heroIntro ||
+                'AI & full-stack engineer. I build production-grade RAG systems and real-time voice assistants, run a home lab, chase techno line-ups, and fish when the servers behave.'}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
