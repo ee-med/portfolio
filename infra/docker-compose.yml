@@ -21,10 +21,9 @@ services:
       # The portfolio and Portainer are installed outside this Compose stack.
       - 'host.docker.internal:host-gateway'
     volumes:
-      # Certificates and credentials live outside Portainer's Git checkout.
+      # Certificates live outside Portainer's Git checkout.
       - /opt/stacks/nginx/letsencrypt:/etc/letsencrypt:ro
       - /opt/stacks/nginx/certbot-webroot:/var/www/certbot:ro
-      - /opt/stacks/nginx/auth:/etc/nginx/auth:ro
     depends_on:
       - web
       - n8n
