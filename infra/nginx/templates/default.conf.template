@@ -43,9 +43,6 @@ server {
     ssl_certificate /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/privkey.pem;
 
-    auth_basic "Portainer";
-    auth_basic_user_file /etc/nginx/auth/.htpasswd;
-
     location / {
         proxy_pass https://host.docker.internal:9443;
         proxy_ssl_verify off;
