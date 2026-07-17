@@ -6,7 +6,13 @@ import React, { useRef } from 'react'
  * Skill chip with a "water" hover: a droplet ripple expands from the cursor
  * on enter, and a wet sheen follows the pointer while hovering.
  */
-export function SkillChip({ name }: { name: string }) {
+export function SkillChip({
+  name,
+  compact = false,
+}: {
+  name: string
+  compact?: boolean
+}) {
   const ref = useRef<HTMLLIElement>(null)
 
   const setSheen = (e: React.PointerEvent<HTMLLIElement>) => {
@@ -36,7 +42,11 @@ export function SkillChip({ name }: { name: string }) {
       ref={ref}
       onPointerEnter={spawnRipple}
       onPointerMove={setSheen}
-      className="water-chip relative overflow-hidden rounded-full border border-line bg-surface px-3 py-1 text-sm text-fg transition-colors hover:border-accent/60"
+      className={`water-chip relative overflow-hidden rounded-full border border-line bg-surface font-mono transition-colors hover:border-accent/60 ${
+        compact
+          ? 'px-2 py-0.5 text-xs text-muted'
+          : 'px-3 py-1 text-sm text-fg'
+      }`}
     >
       <span className="relative z-10">{name}</span>
     </li>
