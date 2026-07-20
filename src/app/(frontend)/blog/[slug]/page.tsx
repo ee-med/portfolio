@@ -53,7 +53,7 @@ export default async function PostPage({
         href="/blog"
         className="font-mono text-sm text-muted transition-colors hover:text-accent"
       >
-        <span className="text-accent">$</span> cd ../blog
+        <span className="text-accent">$</span> cd ..
       </Link>
 
       <article className="mt-8">

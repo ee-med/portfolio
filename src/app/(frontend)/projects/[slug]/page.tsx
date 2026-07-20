@@ -55,7 +55,7 @@ export default async function ProjectPage({
         href="/projects"
         className="font-mono text-sm text-muted transition-colors hover:text-accent"
       >
-        <span className="text-accent">$</span> cd ../projects
+        <span className="text-accent">$</span> cd ..
       </Link>
 
       <header className="mt-8 max-w-3xl">
