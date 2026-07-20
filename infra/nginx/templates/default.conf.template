@@ -6,7 +6,7 @@ map $http_upgrade $connection_upgrade {
 server {
     listen 80;
     listen [::]:80;
-    server_name ${DOMAIN} www.${DOMAIN};
+    server_name ${DOMAIN};
 
     # Keep HTTP origin access available for the Namecheap proxy.
     # Allow media uploads through the Payload CMS admin.
@@ -27,11 +27,11 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
-    server_name ${DOMAIN} www.${DOMAIN};
+    server_name ${DOMAIN};
 
     # Namecheap can use HTTPS to the origin without trusting a self-signed cert.
-    ssl_certificate /etc/letsencrypt/live/${TLS_CERT_NAME}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${TLS_CERT_NAME}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${MAIN_TLS_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${MAIN_TLS_CERT_NAME}/privkey.pem;
     client_max_body_size 25m;
 
     location / {
