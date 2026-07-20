@@ -26,9 +26,10 @@ docker compose up -d
 ## Nginx reverse proxy and TLS
 
 Nginx is the only service exposing public HTTP/HTTPS ports. Namecheap's SSL
-proxy terminates TLS for the main domain and connects to its HTTP origin.
-Portainer, n8n, cal.com, and Umami terminate TLS directly in Nginx using one
-free multi-domain Let's Encrypt certificate.
+proxy terminates visitor TLS for the main domain, while Nginx also presents a
+publicly trusted certificate at the origin. Portainer, n8n, cal.com, and Umami
+terminate TLS directly in Nginx. All hosts share one free multi-domain Let's
+Encrypt certificate.
 
 1. Point the following DNS records to the VPS: `@`, `www`, `portainer`,
    `automation`, `book`, and `analytics`.
@@ -40,25 +41,30 @@ free multi-domain Let's Encrypt certificate.
    ```
 
 3. Before starting Nginx for the first time, issue one certificate containing
-   all direct subdomains. Port 80 must be free and every subdomain must already
-   point to the VPS:
+   the main domain, `www`, and all direct subdomains. Port 80 must be free and
+   every listed hostname must already point to the VPS. The explicit certificate
+   name keeps its directory stable when its domain list changes:
 
    ```bash
    sudo docker run --rm -it \
      -p 80:80 \
      -v /opt/stacks/nginx/letsencrypt:/etc/letsencrypt \
      certbot/certbot certonly --standalone \
+     --cert-name portainer.melhachimi.com \
      -d portainer.melhachimi.com \
+     -d melhachimi.com \
+     -d www.melhachimi.com \
      -d automation.melhachimi.com \
      -d book.melhachimi.com \
      -d analytics.melhachimi.com
    ```
 
-   Nginx references the certificate directory named after the first domain,
-   `portainer.melhachimi.com`.
+   For an existing certificate, run the same command with `--expand` appended.
+   Nginx references `/etc/letsencrypt/live/portainer.melhachimi.com`, selected
+   with `TLS_CERT_NAME=portainer.melhachimi.com` in `.env`.
 
-4. Set `DOMAIN=melhachimi.com` and the public URLs in `.env`, then start the
-   stack:
+4. Set `DOMAIN=melhachimi.com`, `TLS_CERT_NAME=portainer.melhachimi.com`, and
+   the public URLs in `.env`, then start the stack:
 
    ```bash
    docker compose config
