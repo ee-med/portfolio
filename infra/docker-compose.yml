@@ -13,7 +13,8 @@ services:
       - '443:443'
     environment:
       DOMAIN: ${DOMAIN}
-      # Directory name under /etc/letsencrypt/live containing the shared cert.
+      # Certificate lineages under /etc/letsencrypt/live.
+      MAIN_TLS_CERT_NAME: ${MAIN_TLS_CERT_NAME:-${DOMAIN}}
       TLS_CERT_NAME: ${TLS_CERT_NAME:-portainer.${DOMAIN}}
       PORTAINER_SUBDOMAIN: ${PORTAINER_SUBDOMAIN:-portainer}
       N8N_SUBDOMAIN: ${N8N_SUBDOMAIN:-automation}
