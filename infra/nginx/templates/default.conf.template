@@ -8,14 +8,35 @@ server {
     listen [::]:80;
     server_name ${DOMAIN} www.${DOMAIN};
 
-    # TLS for the main site terminates at the Namecheap proxy.
+    # Keep HTTP origin access available for the Namecheap proxy.
     # Allow media uploads through the Payload CMS admin.
     client_max_body_size 25m;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
 
     location / {
         proxy_pass http://web:3000;
         include /etc/nginx/conf.d/proxy-headers.conf;
         proxy_set_header X-Forwarded-Proto https;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    # Namecheap can use HTTPS to the origin without trusting a self-signed cert.
+    ssl_certificate /etc/letsencrypt/live/${TLS_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${TLS_CERT_NAME}/privkey.pem;
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://web:3000;
+        include /etc/nginx/conf.d/proxy-headers.conf;
     }
 }
 
@@ -43,8 +64,8 @@ server {
     http2 on;
     server_name ${PORTAINER_SUBDOMAIN}.${DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${TLS_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${TLS_CERT_NAME}/privkey.pem;
 
     location / {
         proxy_pass https://host.docker.internal:9443;
@@ -59,8 +80,8 @@ server {
     http2 on;
     server_name ${N8N_SUBDOMAIN}.${DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${TLS_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${TLS_CERT_NAME}/privkey.pem;
     client_max_body_size 25m;
 
     location / {
@@ -75,8 +96,8 @@ server {
     http2 on;
     server_name ${CALCOM_SUBDOMAIN}.${DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${TLS_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${TLS_CERT_NAME}/privkey.pem;
     client_max_body_size 25m;
 
     location / {
@@ -91,8 +112,8 @@ server {
     http2 on;
     server_name ${UMAMI_SUBDOMAIN}.${DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${PORTAINER_SUBDOMAIN}.${DOMAIN}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${TLS_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${TLS_CERT_NAME}/privkey.pem;
 
     location / {
         proxy_pass http://umami:3000;
