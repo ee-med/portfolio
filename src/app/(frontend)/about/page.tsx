@@ -95,7 +95,7 @@ export default async function AboutPage() {
       resume ? (
         <section className="mt-12">
           <h2 className="font-mono text-xs font-semibold uppercase tracking-widest text-accent">
-            &gt; connect
+            &gt; elsewhere
           </h2>
           <div className="mt-4 flex flex-wrap items-center gap-4">
             {about.socialLinks?.map((link, i) => (
