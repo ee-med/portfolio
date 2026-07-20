@@ -27,12 +27,13 @@ docker compose up -d
 
 Nginx is the only service exposing public HTTP/HTTPS ports. Namecheap's SSL
 proxy terminates visitor TLS for the main domain, while Nginx also presents a
-publicly trusted certificate at the origin. Portainer, n8n, cal.com, and Umami
-terminate TLS directly in Nginx. All hosts share one free multi-domain Let's
-Encrypt certificate.
+publicly trusted certificate at the origin. Because that proxy intercepts HTTP
+validation, the main domain uses a DNS-validated Let's Encrypt certificate.
+The direct service subdomains share a separate HTTP-validated certificate.
 
-1. Point the following DNS records to the VPS: `@`, `www`, `portainer`,
-   `automation`, `book`, and `analytics`.
+1. Point `portainer`, `automation`, `book`, and `analytics` directly to the VPS.
+   Keep `@` configured for the Namecheap SSL proxy. `www` is optional and is not
+   included unless you create its DNS record and certificate explicitly.
 2. Create stable certificate and challenge directories on the
    VPS, outside Portainer's Git clone:
 
@@ -40,10 +41,9 @@ Encrypt certificate.
    sudo mkdir -p /opt/stacks/nginx/{letsencrypt,certbot-webroot}
    ```
 
-3. Before starting Nginx for the first time, issue one certificate containing
-   the main domain, `www`, and all direct subdomains. Port 80 must be free and
-   every listed hostname must already point to the VPS. The explicit certificate
-   name keeps its directory stable when its domain list changes:
+3. Before starting Nginx for the first time, issue the certificate for the
+   direct subdomains. Port 80 must be free and every listed hostname must
+   already point to the VPS:
 
    ```bash
    sudo docker run --rm -it \
@@ -52,26 +52,41 @@ Encrypt certificate.
      certbot/certbot certonly --standalone \
      --cert-name portainer.melhachimi.com \
      -d portainer.melhachimi.com \
-     -d melhachimi.com \
-     -d www.melhachimi.com \
      -d automation.melhachimi.com \
      -d book.melhachimi.com \
      -d analytics.melhachimi.com
    ```
 
-   For an existing certificate, run the same command with `--expand` appended.
    Nginx references `/etc/letsencrypt/live/portainer.melhachimi.com`, selected
    with `TLS_CERT_NAME=portainer.melhachimi.com` in `.env`.
 
-4. Set `DOMAIN=melhachimi.com`, `TLS_CERT_NAME=portainer.melhachimi.com`, and
-   the public URLs in `.env`, then start the stack:
+4. Issue a separate certificate for the proxied main domain using a DNS
+   challenge. Certbot will display the TXT record that must temporarily be
+   created in Namecheap DNS:
+
+   ```bash
+   sudo docker run --rm -it \
+     -v /opt/stacks/nginx/letsencrypt:/etc/letsencrypt \
+     certbot/certbot certonly --manual \
+     --preferred-challenges dns \
+     --cert-name melhachimi.com \
+     -d melhachimi.com
+   ```
+
+   Wait until the TXT record resolves publicly before pressing Enter. Manual
+   DNS certificates must be renewed with the same process unless DNS updates
+   are later automated through a supported provider API.
+
+5. Set `DOMAIN=melhachimi.com`, `MAIN_TLS_CERT_NAME=melhachimi.com`,
+   `TLS_CERT_NAME=portainer.melhachimi.com`, and the public URLs in `.env`, then
+   start the stack:
 
    ```bash
    docker compose config
    docker compose up -d
    ```
 
-5. Renew the certificate periodically and reload Nginx:
+6. Renew the direct-subdomain certificate periodically and reload Nginx:
 
    ```bash
    sudo docker run --rm \
